@@ -3,8 +3,14 @@ import Home from "./Routes/Home";
 import Tv from "./Routes/Tv";
 import Search from "./Routes/Search";
 import Header from "./Component/Header";
+import { useEffect } from "react";
 
 function App() {
+  // useEffect(() => {
+  //   window.onbeforeunload = function pushRefresh() {
+  //     window.scrollTo(0, 0);
+  //   };
+  // }, []);
   return (
     <BrowserRouter>
       <Header />

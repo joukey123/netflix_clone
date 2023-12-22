@@ -4,7 +4,7 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useMatch } from "react-router-dom";
 import styled from "styled-components";
 
@@ -16,9 +16,10 @@ const Nav = styled(motion.nav)`
   width: 100%;
   height: 80px;
   top: 0;
-  font-size: 14px;
+  font-size: 16px;
   padding: 0 50px;
   box-sizing: border-box;
+  z-index: 99;
 `;
 const Col = styled.div`
   display: flex;
@@ -103,7 +104,7 @@ function Header() {
   const tvMatch = useMatch("tv");
   const inputAnimation = useAnimation();
   const navAnimation = useAnimation();
-  const { scrollY } = useScroll();
+  const { scrollY, scrollYProgress } = useScroll();
 
   useMotionValueEvent(scrollY, "change", () => {
     if (scrollY.get() > 80) {
@@ -112,6 +113,15 @@ function Header() {
       navAnimation.start("top");
     }
   });
+  // useEffect(() => {
+  //   scrollY.on("change", () => {
+  //     if (scrollY.get() > 80) {
+  //       navAnimation.start("scroll");
+  //     } else {
+  //       navAnimation.start("top");
+  //     }
+  //   });
+  // }, []);
   const toggleSearch = () => {
     if (searchOpne) {
       //close input
