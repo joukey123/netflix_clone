@@ -1,14 +1,16 @@
 import { useQuery } from "react-query";
-import { IMoviesData, getMovies } from "../api";
+import { IMoviesData, getMovies, getTop } from "../api";
 import styled from "styled-components";
 import { imgApi } from "../units";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import useWindowDimensions from "../useWindowDimensions";
+import { useMatch, useNavigate } from "react-router-dom";
 
 const Wapper = styled.div`
   background-color: black;
-  height: 200vh;
+  height: 150vh;
+  overflow: hidden;
 `;
 
 const Loader = styled.div`
@@ -43,16 +45,19 @@ const Overview = styled.p`
 
 const Slider = styled.div`
   position: relative;
-  top: -100px;
+  top: -200px;
 `;
 const Row = styled(motion.div)`
   display: grid;
+  padding: 50px;
+  box-sizing: border-box;
   gap: 5px;
   grid-template-columns: repeat(6, 1fr);
   width: 100%;
   height: 200px;
   position: absolute;
 `;
+
 const Box = styled(motion.div)<{ $bgImg: string }>`
   background-image: url(${(props) => props.$bgImg});
   background-size: cover;
@@ -80,6 +85,49 @@ const Info = styled(motion.div)`
   opacity: 0;
   box-sizing: border-box;
 `;
+
+const Overlay = styled(motion.div)`
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.7);
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+`;
+
+const NowPlay = styled(motion.div)`
+  position: fixed;
+  top: 150px;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: 50vw;
+  height: 65vh;
+  background-color: ${(props) => props.theme.black.darker};
+  border-radius: 15px;
+  overflow: hidden;
+`;
+const Img = styled.div`
+  background-size: cover;
+  background-position: center center;
+  width: 100%;
+  height: 400px;
+`;
+const NowPlayTitle = styled.h2`
+  position: relative;
+  top: -60px;
+  padding: 15px;
+  font-size: 30px;
+  font-weight: bold;
+`;
+const NowPlayDec = styled.p`
+  position: relative;
+  top: -60px;
+  padding: 15px;
+  font-size: 18px;
+`;
+
 const boxVariants = {
   nomal: {
     scale: 1,
@@ -109,23 +157,57 @@ const offset = 6;
 
 function Home() {
   const width = useWindowDimensions();
-
-  const { data, isLoading } = useQuery<IMoviesData>(
-    ["movies", "nowPlaying"],
-    getMovies
+  const navigate = useNavigate();
+  const modalBoxMatch = useMatch("movies/:id");
+  const { data: topData, isLoading: popularLoading } = useQuery<IMoviesData>(
+    ["popularMovies", "popular"],
+    getTop
   );
+  const { data: nowPlayData, isLoading: nowPlayLoading } =
+    useQuery<IMoviesData>(["movies", "nowPlaying"], getMovies);
+
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
+  const [isPre, setIsPre] = useState(false);
+
+  const onClickBox = (moviId: number) => {
+    navigate(`/movies/${moviId}`);
+  };
+
+  const onClickOverlay = () => navigate(-1);
+
+  const clickedMovie =
+    modalBoxMatch?.params.id &&
+    nowPlayData?.results.find(
+      (movie) => movie.id + "" === modalBoxMatch?.params.id
+    );
 
   const increaseIndex = () => {
-    if (data) {
+    if (nowPlayData) {
       if (leaving) return;
       toggleLeaving();
-      const totalMovie = data?.results.length - 1;
-      const maxIndex = Math.floor(totalMovie / offset) - 1;
+      const totalMovie = nowPlayData?.results.length - 1; //19
+      const maxIndex = Math.floor(totalMovie / offset) - 1; //2
       setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+      setIsPre(false);
+      console.log(index);
+      console.log(width, "nex");
     }
   };
+
+  const decreaseIndex = () => {
+    if (nowPlayData) {
+      if (leaving) return;
+      toggleLeaving();
+      const totalMovie = nowPlayData?.results.length - 1;
+      const maxIndex = Math.floor(totalMovie / offset) - 1;
+      setIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+      setIsPre(true);
+      console.log(index);
+      console.log(width, "prev");
+    }
+  };
+
   const toggleLeaving = () => {
     setLeaving((prev) => !prev);
   };
@@ -134,31 +216,33 @@ function Home() {
   // );
   return (
     <Wapper>
-      {isLoading ? (
+      {nowPlayLoading ? (
         <Loader> Loading... </Loader>
       ) : (
         <>
           <Banner
             onClick={increaseIndex}
-            $bgImg={imgApi(data?.results[0].backdrop_path || "")}
+            $bgImg={imgApi(nowPlayData?.results[0].backdrop_path || "")}
           >
-            <Title> {data?.results[0].title}</Title>
-            <Overview> {data?.results[0].overview}</Overview>
+            <Title> {nowPlayData?.results[0].title}</Title>
+            <Overview> {nowPlayData?.results[0].overview}</Overview>
           </Banner>
           <Slider>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
               <Row
-                initial={{ x: width + 5 }}
+                initial={{ x: isPre ? -width : width }}
                 animate={{ x: 0 }}
-                exit={{ x: -width - 5 }}
+                exit={{ x: isPre ? width : -width }}
                 transition={{ type: "tween", duration: 1 }}
                 key={index}
               >
-                {data?.results
+                {nowPlayData?.results
                   .slice(1)
                   .slice(index * offset, offset * (index + 1))
                   .map((movie) => (
                     <Box
+                      layoutId={movie.id + ""}
+                      onClick={() => onClickBox(movie.id)}
                       variants={boxVariants}
                       whileHover={"hover"}
                       transition={{ type: "tween" }}
@@ -171,6 +255,37 @@ function Home() {
               </Row>
             </AnimatePresence>
           </Slider>
+
+          <AnimatePresence>
+            {modalBoxMatch ? (
+              <>
+                <Overlay
+                  onClick={onClickOverlay}
+                  exit={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                />
+                <NowPlay
+                  exit={{ opacity: 0 }}
+                  layoutId={modalBoxMatch.params.id}
+                >
+                  {clickedMovie && (
+                    <>
+                      <Img
+                        style={{
+                          backgroundImage: `linear-gradient(to top,black,transparent), url(${imgApi(
+                            clickedMovie.backdrop_path,
+                            "w500"
+                          )})`,
+                        }}
+                      ></Img>
+                      <NowPlayTitle>{clickedMovie.title}</NowPlayTitle>
+                      <NowPlayDec>{clickedMovie.overview}</NowPlayDec>
+                    </>
+                  )}
+                </NowPlay>
+              </>
+            ) : null}
+          </AnimatePresence>
         </>
       )}
     </Wapper>

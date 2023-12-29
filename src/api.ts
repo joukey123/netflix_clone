@@ -10,7 +10,7 @@ interface IMovie {
 }
 
 export interface IMoviesData {
-  dates: {
+  dates?: {
     maximum: string,
     minimum: string,
   },
@@ -19,8 +19,16 @@ export interface IMoviesData {
   total_results: number
 }
 
+
+
 export function getMovies<IMoviesData>() {
   return fetch(`${BASE_URL}/movie/now_playing?api_key=${API_KEY}`).then(
+    (response) => response.json()
+  );
+}
+
+export function getTop<IMoviesData>() {
+  return fetch(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}`).then(
     (response) => response.json()
   );
 }
