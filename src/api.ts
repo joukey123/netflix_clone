@@ -28,7 +28,7 @@ export function getMovies<IMoviesData>() {
 }
 
 export function getTop<IMoviesData>() {
-  return fetch(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}`).then(
+  return fetch(`${BASE_URL}/movie/upcoming?api_key=${API_KEY}`).then(
     (response) => response.json()
   );
 }

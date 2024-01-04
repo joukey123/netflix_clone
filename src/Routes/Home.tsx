@@ -190,21 +190,6 @@ function Home() {
       const maxIndex = Math.floor(totalMovie / offset) - 1; //2
       setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
       setIsPre(false);
-      console.log(index);
-      console.log(width, "nex");
-    }
-  };
-
-  const decreaseIndex = () => {
-    if (nowPlayData) {
-      if (leaving) return;
-      toggleLeaving();
-      const totalMovie = nowPlayData?.results.length - 1;
-      const maxIndex = Math.floor(totalMovie / offset) - 1;
-      setIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
-      setIsPre(true);
-      console.log(index);
-      console.log(width, "prev");
     }
   };
 
